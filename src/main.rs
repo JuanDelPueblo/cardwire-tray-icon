@@ -54,17 +54,9 @@ impl Tray for CardwireTray {
         "Cardwire".to_string()
     }
 
-    fn menu(&self) -> Vec<ksni::MenuItem<Self>> {
-        let mut items = Vec::new();
+    fn tool_tip(&self) -> ksni::ToolTip {
+        let mut tooltip_text = String::from("Name - Power state - default - blocked");
 
-        // Header
-        items.push(ksni::MenuItem::Standard(ksni::menu::StandardItem {
-            label: "id - Name - Power state - default - blocked".to_string(),
-            enabled: false,
-            ..Default::default()
-        }));
-
-        // GPUs
         for gpu in &self.gpus {
             let power_state = fs::read_to_string(format!(
                 "/sys/class/drm/card{}/device/power_state",
@@ -75,19 +67,21 @@ impl Tray for CardwireTray {
             .to_string();
 
             let default_str = if gpu.is_default { "(*)" } else { "( )" };
-            let label = format!(
-                "{} - {} - {} - {} - {}",
-                gpu.id, gpu.name, power_state, default_str, gpu.blocked
-            );
-
-            items.push(ksni::MenuItem::Standard(ksni::menu::StandardItem {
-                label,
-                enabled: false,
-                ..Default::default()
-            }));
+            tooltip_text.push_str(&format!(
+                "\n{} - {} - {} - {}",
+                gpu.name, power_state, default_str, gpu.blocked
+            ));
         }
 
-        items.push(ksni::MenuItem::Separator);
+        ksni::ToolTip {
+            title: "Cardwire GPUs".to_string(),
+            description: tooltip_text,
+            ..Default::default()
+        }
+    }
+
+    fn menu(&self) -> Vec<ksni::MenuItem<Self>> {
+        let mut items = Vec::new();
 
         // Modes
         let options = vec![
