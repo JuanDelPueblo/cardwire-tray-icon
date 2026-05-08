@@ -1,4 +1,4 @@
-# Cardwire Tray Icon
+# Cardwire Tray
 
 An universal tray applet for [Cardwire](https://github.com/OpenGamingCollective/cardwire) GPU manager.
 
