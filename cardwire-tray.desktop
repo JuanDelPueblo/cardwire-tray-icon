@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Cardwire Tray
+Comment=Tray icon for Cardwire GPU manager
+Exec=cardwire-tray
+Icon=cardwire-tray
+Terminal=false
+Type=Application
+Categories=System;Utility;
+StartupNotify=false

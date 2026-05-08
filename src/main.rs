@@ -55,15 +55,18 @@ impl Tray for CardwireTray {
     }
 
     fn icon_name(&self) -> String {
-        let base_path = std::env::current_dir().unwrap().join("icons");
-        match self.mode {
-            0 => base_path
-                .join("integrated.svg")
-                .to_string_lossy()
-                .into_owned(),
-            1 => base_path.join("hybrid.svg").to_string_lossy().into_owned(),
-            2 => base_path.join("manual.svg").to_string_lossy().into_owned(),
-            _ => "preferences-system-windows".to_string(),
+        let name = match self.mode {
+            0 => "integrated",
+            1 => "hybrid",
+            2 => "manual",
+            _ => return "preferences-system-windows".to_string(),
+        };
+
+        let dev_path = std::env::current_dir().unwrap_or_default().join("icons").join(format!("{}.svg", name));
+        if dev_path.exists() {
+            dev_path.to_string_lossy().into_owned()
+        } else {
+            format!("cardwire-{}", name)
         }
     }
 
@@ -101,24 +104,29 @@ impl Tray for CardwireTray {
         let mut items = Vec::new();
 
         // Modes
-        let base_path = std::env::current_dir().unwrap().join("icons");
+        let get_icon = |name: &str| -> String {
+            let dev_path = std::env::current_dir().unwrap_or_default().join("icons").join(format!("{}.svg", name));
+            if dev_path.exists() {
+                dev_path.to_string_lossy().into_owned()
+            } else {
+                format!("cardwire-{}", name)
+            }
+        };
+
         let options = vec![
             ksni::menu::RadioItem {
                 label: "Integrated Mode".to_string(),
-                icon_name: base_path
-                    .join("integrated.svg")
-                    .to_string_lossy()
-                    .into_owned(),
+                icon_name: get_icon("integrated"),
                 ..Default::default()
             },
             ksni::menu::RadioItem {
                 label: "Hybrid Mode".to_string(),
-                icon_name: base_path.join("hybrid.svg").to_string_lossy().into_owned(),
+                icon_name: get_icon("hybrid"),
                 ..Default::default()
             },
             ksni::menu::RadioItem {
                 label: "Manual Mode".to_string(),
-                icon_name: base_path.join("manual.svg").to_string_lossy().into_owned(),
+                icon_name: get_icon("manual"),
                 ..Default::default()
             },
         ];
@@ -171,7 +179,7 @@ impl Tray for CardwireTray {
                 items.push(ksni::MenuItem::Separator);
                 items.push(ksni::MenuItem::SubMenu(ksni::menu::SubMenu {
                     label: "Enabled GPUs".to_string(),
-                    icon_name: base_path.join("gpu.svg").to_string_lossy().into_owned(),
+                    icon_name: get_icon("gpu"),
                     submenu: gpu_items,
                     ..Default::default()
                 }));
