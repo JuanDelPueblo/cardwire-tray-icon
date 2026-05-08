@@ -19,6 +19,9 @@ trait Cardwire {
     #[zbus(property)]
     fn set_mode(&self, mode: u32) -> zbus::Result<()>;
 
+    /// SetGpuBlock method
+    fn set_gpu_block(&self, gpu_id: u32, block: bool) -> zbus::Result<()>;
+
     /// ListDevices method
     fn list_devices(
         &self,
@@ -42,6 +45,7 @@ struct CardwireTray {
 
 enum TrayAction {
     SetMode(u32),
+    ToggleGpuBlock(u32, bool),
     Quit,
 }
 
@@ -55,7 +59,7 @@ impl Tray for CardwireTray {
     }
 
     fn tool_tip(&self) -> ksni::ToolTip {
-        let mut tooltip_text = String::from("Name - Power state - default - blocked");
+        let mut tooltip_text = String::from("Name | Power state | Default | Blocked");
 
         for gpu in &self.gpus {
             let power_state = fs::read_to_string(format!(
@@ -68,7 +72,7 @@ impl Tray for CardwireTray {
 
             let default_str = if gpu.is_default { "(*)" } else { "( )" };
             tooltip_text.push_str(&format!(
-                "\n{} - {} - {} - {}",
+                "\n{} | {} | {} | {}",
                 gpu.name, power_state, default_str, gpu.blocked
             ));
         }
@@ -118,6 +122,43 @@ impl Tray for CardwireTray {
             }
             .into(),
         );
+
+        if self.mode == 2 {
+            let mut gpu_items = Vec::new();
+            for gpu in &self.gpus {
+                if gpu.is_default {
+                    continue;
+                }
+
+                let gpu_id = gpu.id;
+                let is_blocked = gpu.blocked;
+                // Checked means NOT blocked
+                let is_checked = !is_blocked;
+
+                gpu_items.push(ksni::MenuItem::Checkmark(ksni::menu::CheckmarkItem {
+                    label: gpu.name.clone(),
+                    checked: is_checked,
+                    activate: Box::new(move |this: &mut Self| {
+                        // Toggling checked: if it was checked, we uncheck -> means we block (block = true)
+                        // If it was unchecked, we check -> means we unblock (block = false)
+                        let new_block_state = is_checked;
+                        let _ = this
+                            .action_tx
+                            .try_send(TrayAction::ToggleGpuBlock(gpu_id, new_block_state));
+                    }),
+                    ..Default::default()
+                }));
+            }
+
+            if !gpu_items.is_empty() {
+                items.push(ksni::MenuItem::Separator);
+                items.push(ksni::MenuItem::SubMenu(ksni::menu::SubMenu {
+                    label: "Enabled GPUs".to_string(),
+                    submenu: gpu_items,
+                    ..Default::default()
+                }));
+            }
+        }
 
         items.push(ksni::MenuItem::Separator);
 
@@ -229,6 +270,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match action {
                         TrayAction::SetMode(mode) => {
                             let _ = proxy_clone.set_mode(mode).await;
+                        }
+                        TrayAction::ToggleGpuBlock(gpu_id, block) => {
+                            let _ = proxy_clone.set_gpu_block(gpu_id, block).await;
                         }
                         TrayAction::Quit => {
                             std::process::exit(0);
