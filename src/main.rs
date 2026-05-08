@@ -70,7 +70,7 @@ impl Tray for CardwireTray {
             .trim()
             .to_string();
 
-            let default_str = if gpu.is_default { "(*)" } else { "( )" };
+            let default_str = if gpu.is_default { "✅" } else { "❌" };
             tooltip_text.push_str(&format!(
                 "\n{} | {} | {} | {}",
                 gpu.name, power_state, default_str, gpu.blocked
@@ -164,7 +164,7 @@ impl Tray for CardwireTray {
 
         items.push(ksni::MenuItem::Standard(ksni::menu::StandardItem {
             label: "Quit".to_string(),
-            icon_name: "application-exit".into(), // Placeholder
+            icon_name: "application-exit".into(),
             activate: Box::new(|this: &mut Self| {
                 let _ = this.action_tx.try_send(TrayAction::Quit);
             }),
