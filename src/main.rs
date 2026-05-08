@@ -54,6 +54,19 @@ impl Tray for CardwireTray {
         "cardwire-tray".to_string()
     }
 
+    fn icon_name(&self) -> String {
+        let base_path = std::env::current_dir().unwrap().join("icons");
+        match self.mode {
+            0 => base_path
+                .join("integrated.svg")
+                .to_string_lossy()
+                .into_owned(),
+            1 => base_path.join("hybrid.svg").to_string_lossy().into_owned(),
+            2 => base_path.join("manual.svg").to_string_lossy().into_owned(),
+            _ => "preferences-system-windows".to_string(),
+        }
+    }
+
     fn title(&self) -> String {
         "Cardwire".to_string()
     }
@@ -88,20 +101,24 @@ impl Tray for CardwireTray {
         let mut items = Vec::new();
 
         // Modes
+        let base_path = std::env::current_dir().unwrap().join("icons");
         let options = vec![
             ksni::menu::RadioItem {
                 label: "Integrated Mode".to_string(),
-                icon_name: "preferences-system-windows".into(), // Placeholder
+                icon_name: base_path
+                    .join("integrated.svg")
+                    .to_string_lossy()
+                    .into_owned(),
                 ..Default::default()
             },
             ksni::menu::RadioItem {
                 label: "Hybrid Mode".to_string(),
-                icon_name: "preferences-system-windows".into(), // Placeholder
+                icon_name: base_path.join("hybrid.svg").to_string_lossy().into_owned(),
                 ..Default::default()
             },
             ksni::menu::RadioItem {
                 label: "Manual Mode".to_string(),
-                icon_name: "preferences-system-windows".into(), // Placeholder
+                icon_name: base_path.join("manual.svg").to_string_lossy().into_owned(),
                 ..Default::default()
             },
         ];
@@ -154,6 +171,7 @@ impl Tray for CardwireTray {
                 items.push(ksni::MenuItem::Separator);
                 items.push(ksni::MenuItem::SubMenu(ksni::menu::SubMenu {
                     label: "Enabled GPUs".to_string(),
+                    icon_name: base_path.join("gpu.svg").to_string_lossy().into_owned(),
                     submenu: gpu_items,
                     ..Default::default()
                 }));
