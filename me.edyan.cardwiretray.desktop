@@ -2,7 +2,7 @@
 Name=Cardwire Tray
 Comment=Tray icon for Cardwire GPU manager
 Exec=cardwire-tray
-Icon=cardwire-tray
+Icon=me.edyan.cardwiretray
 Terminal=false
 Type=Application
 Categories=System;Utility;

@@ -52,7 +52,7 @@ enum TrayAction {
 
 impl Tray for CardwireTray {
     fn id(&self) -> String {
-        "cardwire-tray".to_string()
+        "me.edyan.cardwiretray".to_string()
     }
 
     fn icon_name(&self) -> String {
@@ -70,7 +70,7 @@ impl Tray for CardwireTray {
         if dev_path.exists() {
             dev_path.to_string_lossy().into_owned()
         } else {
-            format!("cardwire-{}", name)
+            format!("me.edyan.cardwiretray-{}", name)
         }
     }
 
@@ -94,7 +94,7 @@ impl Tray for CardwireTray {
         let icon = if dev_path.exists() {
             dev_path.to_string_lossy().into_owned()
         } else {
-            format!("cardwire-{}", icon_name_base)
+            format!("me.edyan.cardwiretray-{}", icon_name_base)
         };
 
         let _ = self.action_tx.try_send(TrayAction::Notify(
@@ -121,9 +121,10 @@ impl Tray for CardwireTray {
             .to_string();
 
             let default_str = if gpu.is_default { "✅" } else { "❌" };
+            let gpu_blocked_str = if gpu.blocked { "✅" } else { "❌" };
             tooltip_text.push_str(&format!(
                 "\n{} | {} | {} | {}",
-                gpu.name, power_state, default_str, gpu.blocked
+                gpu.name, power_state, default_str, gpu_blocked_str
             ));
         }
 
@@ -146,7 +147,7 @@ impl Tray for CardwireTray {
             if dev_path.exists() {
                 dev_path.to_string_lossy().into_owned()
             } else {
-                format!("cardwire-{}", name)
+                format!("me.edyan.cardwiretray-{}", name)
             }
         };
 
@@ -215,7 +216,7 @@ impl Tray for CardwireTray {
             if !gpu_items.is_empty() {
                 items.push(ksni::MenuItem::Separator);
                 items.push(ksni::MenuItem::SubMenu(ksni::menu::SubMenu {
-                    label: "Enabled GPUs".to_string(),
+                    label: "Disabled GPUs".to_string(),
                     icon_name: get_icon("gpu"),
                     submenu: gpu_items,
                     ..Default::default()
