@@ -46,6 +46,7 @@ struct CardwireTray {
 enum TrayAction {
     SetMode(u32),
     ToggleGpuBlock(u32, bool),
+    Notify(String, String),
     Quit,
 }
 
@@ -62,12 +63,45 @@ impl Tray for CardwireTray {
             _ => return "preferences-system-windows".to_string(),
         };
 
-        let dev_path = std::env::current_dir().unwrap_or_default().join("icons").join(format!("{}.svg", name));
+        let dev_path = std::env::current_dir()
+            .unwrap_or_default()
+            .join("icons")
+            .join(format!("{}.svg", name));
         if dev_path.exists() {
             dev_path.to_string_lossy().into_owned()
         } else {
             format!("cardwire-{}", name)
         }
+    }
+
+    fn activate(&mut self, _x: i32, _y: i32) {
+        let new_mode = if self.mode == 0 { 1 } else { 0 };
+        let mode_desc = if new_mode == 0 {
+            "Integrated"
+        } else {
+            "Hybrid"
+        };
+        let icon_name_base = if new_mode == 0 {
+            "integrated"
+        } else {
+            "hybrid"
+        };
+
+        let dev_path = std::env::current_dir()
+            .unwrap_or_default()
+            .join("icons")
+            .join(format!("{}.svg", icon_name_base));
+        let icon = if dev_path.exists() {
+            dev_path.to_string_lossy().into_owned()
+        } else {
+            format!("cardwire-{}", icon_name_base)
+        };
+
+        let _ = self.action_tx.try_send(TrayAction::Notify(
+            format!("Switched to {} mode", mode_desc),
+            icon,
+        ));
+        let _ = self.action_tx.try_send(TrayAction::SetMode(new_mode));
     }
 
     fn title(&self) -> String {
@@ -105,7 +139,10 @@ impl Tray for CardwireTray {
 
         // Modes
         let get_icon = |name: &str| -> String {
-            let dev_path = std::env::current_dir().unwrap_or_default().join("icons").join(format!("{}.svg", name));
+            let dev_path = std::env::current_dir()
+                .unwrap_or_default()
+                .join("icons")
+                .join(format!("{}.svg", name));
             if dev_path.exists() {
                 dev_path.to_string_lossy().into_owned()
             } else {
@@ -296,6 +333,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     match action {
                         TrayAction::SetMode(mode) => {
                             let _ = proxy_clone.set_mode(mode).await;
+                        }
+                        TrayAction::Notify(msg, icon) => {
+                            // Using tokio::spawn to ensure any blocking code in show() doesn't block the async task
+                            tokio::task::spawn_blocking(move || {
+                                let _ = notify_rust::Notification::new()
+                                    .summary("Cardwire")
+                                    .body(&msg)
+                                    .icon(&icon)
+                                    .show();
+                            });
                         }
                         TrayAction::ToggleGpuBlock(gpu_id, block) => {
                             let _ = proxy_clone.set_gpu_block(gpu_id, block).await;
