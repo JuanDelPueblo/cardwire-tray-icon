@@ -8,7 +8,7 @@ This applet implements all current Cardwire features including mode switching be
 
 ## Install
 
-I currently create packages for Fedora/RPM since it's the only distro I actively use. For other distros, build and compile using make.
+I release Flatpak bundles for this applet using GitHub Releases. If you don't have Flatpak, build and compile using make.
 
 Dependencies: `rust`, `cargo`
 

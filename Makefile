@@ -18,12 +18,6 @@ run:
 
 clean:
 	cargo clean
-	rm -rf rpmbuild
-
-rpm:
-	mkdir -p rpmbuild/SOURCES
-	git archive --format=tar.gz --prefix=cardwire-tray/ HEAD > rpmbuild/SOURCES/cardwire-tray-0.1.0.tar.gz
-	rpmbuild -ba cardwire-tray.spec --define "_topdir $(PWD)/rpmbuild"
 
 install:
 	install -d $(DESTDIR)$(BINDIR)
